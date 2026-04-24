@@ -50,8 +50,8 @@ export function ImageElementView({ el, isSelected, onSelect, onFrameEnd, nodeRef
   const handleTransformEnd = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
-      const sX = n.scaleX();
-      const sY = n.scaleY();
+      const sX = Math.abs(n.scaleX());
+      const sY = Math.abs(n.scaleY());
       const newW = Math.max(MIN, n.width() * sX);
       const newH = Math.max(MIN, n.height() * sY);
       n.width(newW);
@@ -71,8 +71,8 @@ export function ImageElementView({ el, isSelected, onSelect, onFrameEnd, nodeRef
   const handleDragEnd = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
-      const wd = n.width() * n.scaleX();
-      const he = n.height() * n.scaleY();
+      const wd = n.width() * Math.abs(n.scaleX());
+      const he = n.height() * Math.abs(n.scaleY());
       onFrameEnd({ x: n.x() - wd / 2, y: n.y() - he / 2, width: wd, height: he, rotation: n.rotation() });
     },
     [onFrameEnd]

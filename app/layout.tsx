@@ -8,7 +8,7 @@ const caveat = Caveat({ subsets: ["latin"], variable: "--font-hand" });
 const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"], variable: "--font-display" });
 
 export const metadata: Metadata = {
-  title: "Scrapbook — Family design editor",
+  title: "Scrapbook - Family design editor",
   description: "A simple page editor for family scrapbook layouts.",
 };
 

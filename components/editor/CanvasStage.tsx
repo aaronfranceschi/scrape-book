@@ -199,6 +199,7 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
                 <Transformer
                   ref={trRef}
                   rotateEnabled
+                  flipEnabled={false}
                   useSingleNodeRotation
                   keepRatio={false}
                   borderStroke="hsl(217, 91%, 60%)"
@@ -208,12 +209,6 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
                   anchorSize={8}
                   anchorFill="#e4e4e7"
                   ignoreStroke
-                  boundBoxFunc={(_o, n) => {
-                    if (n.width < MIN || n.height < MIN) {
-                      return { ...n, width: Math.max(MIN, n.width), height: Math.max(MIN, n.height) };
-                    }
-                    return n;
-                  }}
                   onTransform={syncTransformer}
                   onTransformEnd={syncTransformer}
                 />

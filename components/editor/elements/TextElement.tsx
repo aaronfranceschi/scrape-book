@@ -41,9 +41,6 @@ export function TextElementView({
   const textEditId = useEditorStore((s) => s.textEditId);
   const setTextEditId = useEditorStore((s) => s.setTextEditId);
   const updateElement = useEditorStore((s) => s.updateElement);
-  const startPropertyGesture = useEditorStore((s) => s.startPropertyGesture);
-  const endPropertyGesture = useEditorStore((s) => s.endPropertyGesture);
-  const setElementFieldLive = useEditorStore((s) => s.setElementFieldLive);
 
   const isEditing = textEditId === id;
   const [draft, setDraft] = useState(text);
@@ -70,8 +67,8 @@ export function TextElementView({
    * `fontSize` stays a true point size; only the text box (wrap region) changes.
    */
   const applyTransformToSize = useCallback((n: ComponentRef<typeof Group>) => {
-    const sX = n.scaleX();
-    const sY = n.scaleY();
+    const sX = Math.abs(n.scaleX());
+    const sY = Math.abs(n.scaleY());
     const w0 = n.width() || 0;
     const h0 = n.height() || 0;
     const newW = Math.max(MIN, w0 * sX);
@@ -95,40 +92,35 @@ export function TextElementView({
   const handleTransform = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
-      applyTransformToSize(n);
+      // Preview only while dragging; commit frame once in `onTransformEnd`.
       onNodeTransform?.();
       n.getLayer()?.batchDraw();
     },
-    [applyTransformToSize, onNodeTransform]
+    [onNodeTransform]
   );
-
-  const handleTransformStart = useCallback(() => {
-    startPropertyGesture();
-  }, [startPropertyGesture]);
 
   const handleTransformEnd = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
       const f = applyTransformToSize(n);
       if (![f.x, f.y, f.width, f.height, f.rotation].every(Number.isFinite)) {
-        endPropertyGesture();
         onNodeTransform?.();
         n.getLayer()?.batchDraw();
         return;
       }
-      setElementFieldLive(id, (el) => (el.type === "text" && el.id === id ? { ...el, ...f } : el));
-      endPropertyGesture();
+      // Keep text content untouched; only persist frame geometry after resize/rotate.
+      onFrameEnd(f);
       onNodeTransform?.();
       n.getLayer()?.batchDraw();
     },
-    [id, applyTransformToSize, setElementFieldLive, endPropertyGesture, onNodeTransform]
+    [applyTransformToSize, onFrameEnd, onNodeTransform]
   );
 
   const handleDragEnd = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
-      const wd = n.width() * n.scaleX();
-      const he = n.height() * n.scaleY();
+      const wd = n.width() * Math.abs(n.scaleX());
+      const he = n.height() * Math.abs(n.scaleY());
       onFrameEnd({ x: n.x() - wd / 2, y: n.y() - he / 2, width: wd, height: he, rotation: n.rotation() });
     },
     [onFrameEnd]
@@ -208,7 +200,6 @@ export function TextElementView({
         onDblClick?.();
       }}
       onTransform={handleTransform as never}
-      onTransformStart={handleTransformStart as never}
       onTransformEnd={handleTransformEnd as never}
       onDragEnd={handleDragEnd as never}
     >

@@ -48,7 +48,7 @@ export function createWelcomeText(
     width: 640,
     height: 64,
     rotation: 0,
-    text: "Your story starts here — photos, type, a little mess. Double-click to edit.",
+    text: "Your story starts here, photos, type, a little mess. Double-click to edit.",
     style: { ...defaultTextStyle, fontSize: 24 },
   };
 }
