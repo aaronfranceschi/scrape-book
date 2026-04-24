@@ -41,7 +41,7 @@ export function EditorToolbar({ onExportPng, onExportPdf, onExportHtml, classNam
   };
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2 text-foreground", className)}>
       <div className="mr-1 flex min-w-0 flex-wrap items-center gap-1">
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
         <Button type="button" size="sm" variant="secondary" onClick={addText} className="gap-1 transition-colors hover:border-primary/30">

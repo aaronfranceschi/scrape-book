@@ -72,8 +72,10 @@ export function TextElementView({
   const applyTransformToSize = useCallback((n: ComponentRef<typeof Group>) => {
     const sX = n.scaleX();
     const sY = n.scaleY();
-    const newW = Math.max(MIN, n.width() * sX);
-    const newH = Math.max(MIN, n.height() * sY);
+    const w0 = n.width() || 0;
+    const h0 = n.height() || 0;
+    const newW = Math.max(MIN, w0 * sX);
+    const newH = Math.max(MIN, h0 * sY);
     n.width(newW);
     n.height(newH);
     n.offsetX(newW / 2);
@@ -85,15 +87,19 @@ export function TextElementView({
     return { x: cdx - newW / 2, y: cdy - newH / 2, width: newW, height: newH, rotation: n.rotation() };
   }, []);
 
+  /**
+   * While dragging, only mutate the Konva node. Do not push to Zustand here — that
+   * re-renders the tree every frame, fights the Transformer, and can crash React.
+   * The document is updated once in `onTransformEnd`.
+   */
   const handleTransform = useCallback(
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
-      const f = applyTransformToSize(n);
-      setElementFieldLive(id, (el) => (el.type === "text" && el.id === id ? { ...el, ...f } : el));
+      applyTransformToSize(n);
       onNodeTransform?.();
       n.getLayer()?.batchDraw();
     },
-    [id, applyTransformToSize, setElementFieldLive, onNodeTransform]
+    [applyTransformToSize, onNodeTransform]
   );
 
   const handleTransformStart = useCallback(() => {
@@ -104,6 +110,12 @@ export function TextElementView({
     (e: { target: ComponentRef<typeof Group> }) => {
       const n = e.target;
       const f = applyTransformToSize(n);
+      if (![f.x, f.y, f.width, f.height, f.rotation].every(Number.isFinite)) {
+        endPropertyGesture();
+        onNodeTransform?.();
+        n.getLayer()?.batchDraw();
+        return;
+      }
       setElementFieldLive(id, (el) => (el.type === "text" && el.id === id ? { ...el, ...f } : el));
       endPropertyGesture();
       onNodeTransform?.();

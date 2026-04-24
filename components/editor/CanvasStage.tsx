@@ -3,12 +3,12 @@
 import type { ComponentRef } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Group, Layer, Rect, Stage, Transformer } from "react-konva";
+import { useShallow } from "zustand/react/shallow";
 import { PAGE_H, PAGE_W } from "@/types/editor";
-import type { EditorElement } from "@/types/editor";
+import { getSafeCurrentPage } from "@/lib/mockPersistence";
 import { useEditorStore, selectElementsForPage } from "@/store/editorStore";
-import { ImageElementView } from "./elements/ImageElement";
-import { TextElementView } from "./elements/TextElement";
 import { aabbAfterUniformScale, pageOffsetsForStage, sizeStageToContainerWidth } from "@/lib/editorLayout";
+import { CanvasItem } from "./CanvasItem";
 
 const MIN = 20;
 
@@ -28,8 +28,16 @@ type Off = { ox: number; oy: number };
  * The white page stays mathematically centered in the stage.
  */
 export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
-  const { elements, pages, currentPageId, selectedElementId, setSelected, setElementFrame, setTextEditId } = useEditorStore();
-  const page = pages.find((p) => p.id === currentPageId) ?? pages[0]!;
+  const { elements, pages, currentPageId, selectedElementId, setSelected } = useEditorStore(
+    useShallow((s) => ({
+      elements: s.elements,
+      pages: s.pages,
+      currentPageId: s.currentPageId,
+      selectedElementId: s.selectedElementId,
+      setSelected: s.setSelected,
+    }))
+  );
+  const page = getSafeCurrentPage(pages, currentPageId);
 
   const { stw, sth, layoutScale } = useMemo(
     () => sizeStageToContainerWidth(containerWidth),
@@ -48,6 +56,11 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
   const nodeMap = useRef<Record<string, ComponentRef<typeof Group>>>({});
   const onLayerReadyRef = useRef(onLayerReady);
   onLayerReadyRef.current = onLayerReady;
+
+  const attachNode = useCallback((id: string, g: ComponentRef<typeof Group> | null) => {
+    if (g) nodeMap.current[id] = g;
+    else delete nodeMap.current[id];
+  }, []);
 
   const { ox, oy } = useMemo(() => pageOffsetsForStage(stw, sth), [stw, sth]);
   pageRectRef.current = { ox, oy };
@@ -112,7 +125,7 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
             transformOrigin: `${pCx}px ${pCy}px`,
           }}
         >
-          <div className="h-full w-full overflow-hidden rounded-md border border-border/80 bg-input/20 shadow-inner">
+          <div className="h-full w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-background">
             <Stage
               className="block"
               width={stw}
@@ -141,13 +154,14 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
                   }
                 }}
               >
+                {/* Dark pasteboard around the white paper (topbar-matching theme). */}
                 <Rect
                   x={0}
                   y={0}
                   width={stw}
                   height={sth}
                   name="background"
-                  fill="hsl(220 10% 62%)"
+                  fill="hsl(220 8% 10%)"
                   onPointerDown={() => {
                     setSelected(null);
                   }}
@@ -171,43 +185,13 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
                   />
                   {ordered.map((el) => {
                     if (!el) return null;
-                    const isSel = el.id === selectedElementId;
-                    if (el.type === "text") {
-                      return (
-                        <TextElementView
-                          key={el.id}
-                          {...el}
-                          isSelected={isSel}
-                          onSelect={() => {
-                            setSelected(el.id);
-                          }}
-                          onDblClick={() => {
-                            setSelected(el.id);
-                            setTextEditId(el.id);
-                          }}
-                          onFrameEnd={(f) => setElementFrame(el.id, f)}
-                          onNodeTransform={syncTransformer}
-                          nodeRef={(g) => {
-                            if (g) nodeMap.current[el.id] = g;
-                            else delete nodeMap.current[el.id];
-                          }}
-                        />
-                      );
-                    }
                     return (
-                      <ImageElementView
+                      <CanvasItem
                         key={el.id}
-                        el={el as Extract<EditorElement, { type: "image" }>}
-                        isSelected={isSel}
-                        onSelect={() => {
-                          setSelected(el.id);
-                        }}
-                        onFrameEnd={(f) => setElementFrame(el.id, f)}
+                        el={el}
+                        isSelected={el.id === selectedElementId}
                         onNodeTransform={syncTransformer}
-                        nodeRef={(g) => {
-                          if (g) nodeMap.current[el.id] = g;
-                          else delete nodeMap.current[el.id];
-                        }}
+                        attachNode={attachNode}
                       />
                     );
                   })}
@@ -217,12 +201,12 @@ export function CanvasStage({ zoom, containerWidth, onLayerReady }: Props) {
                   rotateEnabled
                   useSingleNodeRotation
                   keepRatio={false}
-                  borderStroke="hsl(262,75%,58%)"
+                  borderStroke="hsl(217, 91%, 60%)"
                   borderStrokeWidth={1.5}
                   borderDash={[2, 2]}
                   padding={6}
                   anchorSize={8}
-                  anchorFill="#fff"
+                  anchorFill="#e4e4e7"
                   ignoreStroke
                   boundBoxFunc={(_o, n) => {
                     if (n.width < MIN || n.height < MIN) {

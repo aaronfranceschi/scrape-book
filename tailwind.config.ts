@@ -25,6 +25,9 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans, ui-sans-serif)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif, Georgia)", "Georgia", "serif"],
+        hand: ["var(--font-hand, cursive)", "cursive"],
+        display: ["var(--font-display, system-ui)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono, ui-monospace)", "monospace"],
       },
     },

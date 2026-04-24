@@ -1,5 +1,16 @@
-/** Preset stacks for the properties panel (value = CSS font-family string). */
+/**
+ * Preset stacks for the properties panel (value = CSS font-family string).
+ * First three match next/font in app/layout (loaded for canvas + UI).
+ */
+export const THEME_TEXT_SERIF = "Fraunces, Georgia, 'Times New Roman', serif";
+export const THEME_TEXT_HAND = "Caveat, cursive";
+export const THEME_TEXT_MARKER = "'Permanent Marker', 'Trebuchet MS', cursive";
+export const THEME_INK = "#0a0a0a";
+
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
+  { value: THEME_TEXT_SERIF, label: "Editorial (serif)" },
+  { value: THEME_TEXT_HAND, label: "Hand script" },
+  { value: THEME_TEXT_MARKER, label: "Marker" },
   { value: "Inter, system-ui, sans-serif", label: "Inter" },
   { value: "system-ui, -apple-system, Segoe UI, sans-serif", label: "System UI" },
   { value: "Georgia, 'Times New Roman', serif", label: "Georgia" },

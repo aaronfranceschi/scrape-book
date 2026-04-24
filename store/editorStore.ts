@@ -4,7 +4,13 @@ import { create } from "zustand";
 import type { EditorElement, HistorySnapshot, ImageElement, PageModel, TextElement, PersistedEditor, ImageCrop } from "@/types/editor";
 import { PAGE_H, PAGE_W } from "@/types/editor";
 import { newId } from "@/lib/ids";
-import { createDefaultPersistedState, createWelcomeText, normalizePersistedEditor } from "@/lib/mockPersistence";
+import {
+  createDefaultPersistedState,
+  createWelcomeText,
+  getSafeCurrentPage,
+  normalizePersistedEditor,
+} from "@/lib/mockPersistence";
+import { THEME_INK, THEME_TEXT_SERIF } from "@/lib/textFonts";
 
 const MAX_HISTORY = 50;
 const MIN_SIZE = 20;
@@ -51,11 +57,6 @@ function cloneDoc(s: Doc): Doc {
 
 const defaultCrop: ImageCrop = { x: 0, y: 0, width: 1, height: 1, scale: 1 };
 
-function getCurrentPage(
-  s: { pages: PageModel[]; currentPageId: string } | { pages: PageModel[]; currentPageId: string }
-): PageModel {
-  return s.pages.find((p) => p.id === s.currentPageId) ?? s.pages[0]!;
-}
 
 const initial: EditorState = (() => {
   const p = createDefaultPersistedState();
@@ -134,7 +135,7 @@ export const useEditorStore = create<Store>()((set, get) => ({
     setTextEditId: (id) => set({ textEditId: id }),
     addText: () => {
       get()._withHistory((d) => {
-        const page = getCurrentPage(d);
+        const page = getSafeCurrentPage(d.pages, d.currentPageId);
         const id = newId();
         const el: TextElement = {
           id,
@@ -148,11 +149,11 @@ export const useEditorStore = create<Store>()((set, get) => ({
           text: "New text",
           style: {
             fontSize: 32,
-            fill: "#0f172a",
+            fill: THEME_INK,
             fontWeight: "normal",
             fontStyle: "normal",
             textDecoration: "none",
-            fontFamily: "Inter, system-ui, sans-serif",
+            fontFamily: THEME_TEXT_SERIF,
           },
         };
         d.elements[id] = el;
@@ -172,7 +173,7 @@ export const useEditorStore = create<Store>()((set, get) => ({
       img.crossOrigin = "anonymous";
       img.onload = () => {
         get()._withHistory((d) => {
-          const page = getCurrentPage(d);
+          const page = getSafeCurrentPage(d.pages, d.currentPageId);
           const id = newId();
           const w = 320;
           const aspect = img.naturalWidth / Math.max(1, img.naturalHeight);
@@ -293,6 +294,7 @@ export const useEditorStore = create<Store>()((set, get) => ({
       set((s) => ({
         ...s,
         ...doc,
+        textEditId: null,
         history: [],
         future: [],
       }));
