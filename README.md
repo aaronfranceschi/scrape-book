@@ -1,4 +1,4 @@
-# Family scrapbook — design editor (MVP)
+# Family scrapbook - design editor
 
 A browser-based, parent-friendly page editor for family scrapbook layouts. Think **Canva** or **PowerPoint**–style: one printable page, images and text, drag, resize, rotate, undo/redo, and **PNG** export. State is a **JSON-serializable** document that maps cleanly to **MongoDB** later; **persistence** is currently mocked (browser `localStorage`).
 
